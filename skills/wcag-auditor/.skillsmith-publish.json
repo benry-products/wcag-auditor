@@ -1,0 +1,7 @@
+{
+  "name": "wcag-auditor",
+  "version": "0.1.0",
+  "checksum": "bc6e11db42a366d14ff9880a7cd06c942d80c7bd60e269987b2dd21e8bea8663",
+  "checksumAlgorithm": "sha256",
+  "trustTier": "community"
+}

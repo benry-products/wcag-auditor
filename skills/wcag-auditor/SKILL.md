@@ -13,6 +13,16 @@ Runs axe-core via Playwright against public and authenticated routes, maps
 violations to specific WCAG success criteria, and proposes concrete Edit-tool
 diffs against the user's source code.
 
+## Prerequisites
+
+- **Node.js ≥ 22** (current active LTS). The scripts use modern ESM features and will fail on Node 20.
+- **Install runtime dependencies** before first use. From the installed skill directory (typically `~/.claude/skills/wcag-auditor/`):
+  ```bash
+  npm install
+  npx playwright install chromium
+  ```
+  This pulls in `playwright`, `@axe-core/playwright`, `axe-core`, `fast-xml-parser`, `docx`, and `jszip`, and downloads the Chromium binary Playwright drives.
+
 ## When to use this skill
 
 Invoke when the user says any of:

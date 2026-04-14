@@ -1,0 +1,20 @@
+{
+  "name": "wcag-auditor-skill",
+  "version": "0.1.0",
+  "description": "Runtime dependencies for the wcag-auditor Claude Code skill. Install with `npm install` in this directory after the skill is installed.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "Scott Baldwin",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "axe-core": "^4.11.2",
+    "docx": "^9.0.0",
+    "fast-xml-parser": "^4.5.0",
+    "jszip": "^3.10.1",
+    "playwright": "^1.48.0"
+  }
+}

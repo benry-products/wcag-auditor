@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "wcag-auditor",
-      "source": ".",
+      "source": "./",
       "description": "Audit your own web app for WCAG 2.2 AA accessibility compliance. Runs axe-core via Playwright, maps violations to WCAG success criteria, proposes remediation diffs, and fills in VPAT 2.5 INT ACRs."
     }
   ]

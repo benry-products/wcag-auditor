@@ -1,7 +1,7 @@
 ---
 name: wcag-auditor
 description: Use when the user wants to audit their own web application for WCAG accessibility compliance, run an a11y check on a URL (including authenticated routes), generate a markdown accessibility findings report, fill in a VPAT / ACR, or get concrete remediation diffs for accessibility violations. Default target is WCAG 2.2 Level AA (covers 2.0/2.1 A/AA transitively); AAA is opt-in. VPAT fill-in requires a user-supplied ITI VPAT 2.5 INT template; covers WCAG + Section 508 + EN 301 549 via crosswalks.
-version: "0.1.6"
+version: "0.1.7"
 author: Scott Baldwin
 license: MIT
 tags:
@@ -60,32 +60,51 @@ this `SKILL.md`. In a plugin install that will be something like:
 ```
 
 The skill's `package.json` lives at the **plugin root** (two levels up
-from `skills/wcag-auditor/`). `cd` to the plugin root, then:
+from `skills/wcag-auditor/`). From now on, use `<PLUGIN_ROOT>` to refer to
+that directory. **Do not `cd` into it** — `cd` can be fragile across Claude
+Code shells (especially on Windows where paths contain spaces and
+backslashes). Instead, pass the plugin root as an absolute path to every
+command, either via `--prefix` (for npm) or as part of the argument path.
 
-1. If `./node_modules/` does not exist, run:
+1. If `<PLUGIN_ROOT>/node_modules/` does not exist, install dependencies.
+   Use `--prefix` so the command works regardless of current working
+   directory and without needing a `cd`:
    ```bash
-   npm install
+   npm install --prefix "<PLUGIN_ROOT>"
    ```
    This installs `playwright`, `@axe-core/playwright`, `axe-core`,
    `fast-xml-parser`, `docx`, and `jszip`. Tarballs are npm-cached
    globally, so subsequent installs after plugin updates are fast.
 
-2. Run (always — it is a no-op when the correct Chromium revision is
-   already cached under `~/Library/Caches/ms-playwright/` on macOS,
-   `~/.cache/ms-playwright/` on Linux):
+2. Install the Playwright Chromium binary. **Always invoke Playwright's
+   CLI entry point directly via `node`**, *not* via `npx playwright` and
+   *never* via `node_modules/.bin/playwright` — the `.bin/` shim is a
+   bash script on Unix and a `.cmd` on Windows, and trying to run it
+   with `node <path-to-shim>` on Windows fails with a `SyntaxError:
+   missing ) after argument list` (Node parses the bash shebang script
+   as JavaScript). The CLI entry point is an ESM file and is fully
+   cross-platform:
    ```bash
-   npx playwright install chromium
+   node "<PLUGIN_ROOT>/node_modules/playwright/cli.js" install chromium
    ```
    Exits in under a second with "chromium X is already installed" when
-   cached; downloads only when the underlying Playwright version changed.
+   the correct revision is cached (`~/Library/Caches/ms-playwright/` on
+   macOS, `~/.cache/ms-playwright/` on Linux,
+   `%LOCALAPPDATA%\ms-playwright\` on Windows). Downloads only when
+   Playwright version changed.
 
 Both commands are idempotent. If the user has not pre-authorized `npm` /
-`npx` in their Claude Code permissions, the first invocation will prompt
-for approval; after that they run silently.
+`node` in their Claude Code permissions, the first invocation prompts for
+approval; after that they run silently.
 
-Do not proceed to step 1 until both commands complete successfully. If
-`npm install` fails (e.g., offline, disk full), surface the error and
-stop — the audit scripts cannot run without dependencies.
+Do not proceed to step 1 until both commands complete successfully
+(exit 0). If `npm install` fails (e.g., offline, disk full), surface
+the error and stop — the audit scripts cannot run without dependencies.
+
+**Platform note:** on Windows, `<PLUGIN_ROOT>` will look like
+`C:\Users\<Name>\.claude\plugins\cache\wcag-auditor-tools\wcag-auditor\<version>`.
+Always quote the path when passing to `--prefix` or as an argument, since
+it almost always contains spaces (e.g., OneDrive-synced home directories).
 
 ### 1. Clarify scope (mandatory gate)
 

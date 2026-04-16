@@ -152,36 +152,45 @@ then pass its path to `vpat-fill.mjs`.
 
 ## Troubleshooting
 
-### "I pushed a fix but Claude is still running old behavior"
+### "I installed the plugin but I'm not getting the latest version"
 
-Plugin installs are cached under `~/.claude/plugins/cache/…/<version>/` and
-refreshed only when the plugin manager pulls a newer version from the
-marketplace. If the marketplace clone itself is stale (e.g., its git remote
-points at a transferred repo, or `/plugin` hasn't been asked to update), you
-can keep running an old version indefinitely.
+Third-party plugin marketplaces (this one included) have **auto-update off
+by default** in Claude Code. Your local marketplace clone is only refreshed
+when you explicitly ask for it, so `/plugin install` may install an older
+cached version even on a machine where the plugin has never run before.
 
-The scripts now log their version to stderr on startup
-(`audit.mjs v0.1.2`, etc.). If that number doesn't match the latest
-[plugin.json](./.claude-plugin/plugin.json) on `main`, your cache is stale.
+The scripts log their version to stderr on every run
+(`audit.mjs v0.1.3`, etc.). If that number lags behind the latest
+[plugin.json](./.claude-plugin/plugin.json) on `main`, your marketplace
+clone is stale.
 
-To force a refresh:
+**Fix (recommended):**
 
-```bash
-# 1. Pull the marketplace clone
-cd ~/.claude/plugins/marketplaces/wcag-auditor-tools
-git remote -v                                   # verify origin is benry-products
-git remote set-url origin https://github.com/benry-products/wcag-auditor.git   # if wrong
-git pull --ff-only
-
-# 2. In a Claude Code session, run `/plugin` and update wcag-auditor.
-#    Or, as a manual fallback, mirror the marketplace into the cache:
-rsync -a --delete \
-  ~/.claude/plugins/marketplaces/wcag-auditor-tools/skills/ \
-  ~/.claude/plugins/cache/wcag-auditor-tools/wcag-auditor/<version>/skills/
+```
+/plugin marketplace update wcag-auditor-tools
+/plugin install wcag-auditor@wcag-auditor-tools
 ```
 
-After this, the next skill invocation will print the new version in the
-banner and run the current code.
+`/plugin marketplace update` does the `git pull` on the local marketplace
+clone so the subsequent install reads the current plugin.json.
+
+**Permanent fix:** in Claude Code, open `/plugin` → **Marketplaces** tab and
+enable auto-update for `wcag-auditor-tools`. After that, the marketplace
+refreshes in the background on startup.
+
+### "Marketplace clone points at the old GitHub org"
+
+This repo was transferred from `benry-git` to `benry-products` on
+2026-04-16. Clones made before that date may have the old origin URL and
+fail to fetch. Fix:
+
+```bash
+cd ~/.claude/plugins/marketplaces/wcag-auditor-tools
+git remote set-url origin https://github.com/benry-products/wcag-auditor.git
+git pull --ff-only
+```
+
+Then re-run `/plugin marketplace update wcag-auditor-tools`.
 
 ## License
 

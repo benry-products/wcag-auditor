@@ -18,6 +18,7 @@ import { parseArgs } from 'node:util';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { printVersionBanner } from './lib/version.mjs';
+import { checkForUpdates } from './lib/version-check.mjs';
 
 const EXIT_OK = 0;
 const EXIT_SCRIPT_ERROR = 2;
@@ -75,6 +76,7 @@ Add it to .gitignore. Never commit it.
 async function main() {
   printVersionBanner('login.mjs');
   const opts = parseCliArgs(process.argv.slice(2));
+  await checkForUpdates();
 
   process.stdout.write(
     `\nlogin.mjs: opening ${opts.url} in a headed browser...\n`,

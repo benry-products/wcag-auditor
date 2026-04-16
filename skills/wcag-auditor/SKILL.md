@@ -1,7 +1,7 @@
 ---
 name: wcag-auditor
 description: Use when the user wants to audit their own web application for WCAG accessibility compliance, run an a11y check on a URL (including authenticated routes), generate a markdown accessibility findings report, fill in a VPAT / ACR, or get concrete remediation diffs for accessibility violations. Default target is WCAG 2.2 Level AA (covers 2.0/2.1 A/AA transitively); AAA is opt-in. VPAT fill-in requires a user-supplied ITI VPAT 2.5 INT template; covers WCAG + Section 508 + EN 301 549 via crosswalks.
-version: "0.1.3"
+version: "0.1.4"
 author: Scott Baldwin
 license: MIT
 tags:

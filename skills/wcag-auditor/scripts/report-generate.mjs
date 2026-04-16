@@ -19,6 +19,7 @@ import { resolve, dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { normalizeToAggregated } from './lib/normalize.mjs';
 import { printVersionBanner } from './lib/version.mjs';
+import { checkForUpdates } from './lib/version-check.mjs';
 
 const EXIT_OK = 0;
 const EXIT_SCRIPT_ERROR = 2;
@@ -272,6 +273,7 @@ function renderFooter(aggregated) {
 async function main() {
   printVersionBanner('report-generate.mjs');
   const opts = parseCliArgs(process.argv.slice(2));
+  await checkForUpdates();
 
   let aggregated;
   try {

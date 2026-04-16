@@ -26,6 +26,7 @@ import {
 } from './lib/audit-core.mjs';
 import { resolveUrls } from './lib/url-sources.mjs';
 import { printVersionBanner } from './lib/version.mjs';
+import { checkForUpdates } from './lib/version-check.mjs';
 
 function parseCliArgs(argv) {
   const { values } = parseArgs({
@@ -218,6 +219,7 @@ function aggregate(perUrlReports) {
 async function main() {
   printVersionBanner('audit-site.mjs');
   const opts = parseCliArgs(process.argv.slice(2));
+  await checkForUpdates();
 
   let storageState;
   if (opts.authPath) {

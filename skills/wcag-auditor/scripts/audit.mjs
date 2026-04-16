@@ -23,6 +23,7 @@ import {
   thresholdCrossed,
 } from './lib/audit-core.mjs';
 import { printVersionBanner } from './lib/version.mjs';
+import { checkForUpdates } from './lib/version-check.mjs';
 
 function parseCliArgs(argv) {
   const { values } = parseArgs({
@@ -118,6 +119,7 @@ function fail(msg) {
 async function main() {
   printVersionBanner('audit.mjs');
   const opts = parseCliArgs(process.argv.slice(2));
+  await checkForUpdates();
 
   let storageState;
   if (opts.authPath) {

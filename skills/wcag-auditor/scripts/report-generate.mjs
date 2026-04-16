@@ -14,9 +14,10 @@
  * conformance table). Passing a score.json produces the full report.
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
 import { parseArgs } from 'node:util';
+import { normalizeToAggregated } from './lib/normalize.mjs';
 
 const EXIT_OK = 0;
 const EXIT_SCRIPT_ERROR = 2;
@@ -29,7 +30,7 @@ function parseCliArgs(argv) {
     options: {
       aggregated: { type: 'string' },
       score: { type: 'string' },
-      out: { type: 'string', default: './report.md' },
+      out: { type: 'string', default: './wcag-audit/report.md' },
       help: { type: 'boolean', short: 'h', default: false },
     },
     allowPositionals: false,
@@ -57,9 +58,11 @@ Usage:
   node report-generate.mjs --aggregated <path> [--score <path>] [--out ./report.md]
 
 Options:
-  --aggregated <path>  aggregated.json from audit-site.mjs
+  --aggregated <path>  aggregated.json from audit-site.mjs,
+                       OR a single-URL audit JSON from audit.mjs
+                       (single-URL input is wrapped internally)
   --score <path>       score.json from score.mjs (enables per-SC table)
-  --out <path>         output markdown path (default: ./report.md)
+  --out <path>         output markdown path (default: ./wcag-audit/report.md)
   -h, --help           show this help
 
 Output is deterministic: same inputs produce byte-identical output.
@@ -270,7 +273,10 @@ async function main() {
 
   let aggregated;
   try {
-    aggregated = JSON.parse(await readFile(opts.aggregatedPath, 'utf8'));
+    aggregated = normalizeToAggregated(
+      JSON.parse(await readFile(opts.aggregatedPath, 'utf8')),
+      fail,
+    );
   } catch (err) {
     fail(`failed to read --aggregated: ${err.message}`);
   }
@@ -294,6 +300,7 @@ async function main() {
     .filter(Boolean)
     .join('\n');
 
+  await mkdir(dirname(opts.outPath), { recursive: true });
   await writeFile(opts.outPath, md, 'utf8');
   process.stderr.write(`report-generate: ${opts.outPath}\n`);
   process.exit(EXIT_OK);

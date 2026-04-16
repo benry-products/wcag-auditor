@@ -7,9 +7,9 @@
  */
 
 import { chromium } from 'playwright';
-import { writeFile, access } from 'node:fs/promises';
+import { writeFile, access, mkdir } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 import {
   EXIT_OK,
@@ -70,7 +70,8 @@ function parseCliArgs(argv) {
   }
 
   const out =
-    values.out ?? `./audit-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    values.out ??
+    `./wcag-audit/audit-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
 
   return {
     url: values.url,
@@ -95,7 +96,7 @@ Options:
   --level AA|AAA           WCAG level (default: AA)
   --viewport <WxH>         Viewport (repeatable; default: 1280x800 and 375x667)
   --include-best-practice  Include axe best-practice rules (non-normative)
-  --out <path>             Output JSON path (default: ./audit-<timestamp>.json)
+  --out <path>             Output JSON path (default: ./wcag-audit/audit-<timestamp>.json)
   --fail-on <level>        Exit 1 if any violation impact >= <level>.
                            One of: none, minor, moderate, serious, critical, any
                            Default: none
@@ -153,6 +154,7 @@ async function main() {
   };
 
   try {
+    await mkdir(dirname(opts.out), { recursive: true });
     await writeFile(opts.out, JSON.stringify(report, null, 2) + '\n', 'utf8');
   } catch (err) {
     fail(`failed to write ${opts.out}: ${err.message}`);

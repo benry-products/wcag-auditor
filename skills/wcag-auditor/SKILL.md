@@ -104,9 +104,14 @@ and presses Enter in the terminal. Session state saves to `./auth.json`.
 
 ### 4. Run the automated audit
 
+All outputs default to `./wcag-audit/` in the current working directory —
+a single workspace directory keeps audit artifacts together and easy to
+`.gitignore`. Override with `--out` if needed.
+
 Single URL:
 ```bash
-node scripts/audit.mjs --url <url> --auth ./auth.json --out ./audit.json
+node scripts/audit.mjs --url <url> --auth ./auth.json
+# writes ./wcag-audit/audit-<timestamp>.json
 ```
 
 Multi-URL (recommended):
@@ -115,11 +120,9 @@ node scripts/audit-site.mjs \
   --urls ./urls.txt \
   [--sitemap https://example.com/sitemap.xml] \
   [--crawl-from https://example.com/dashboard --depth 2] \
-  --auth ./auth.json \
-  --out ./audit/
+  --auth ./auth.json
+# writes ./wcag-audit/aggregated.json + per-URL JSON + urls.resolved.txt
 ```
-
-Outputs `./audit/aggregated.json` plus per-URL JSON files and `urls.resolved.txt`.
 
 ### 5. Run the manual-check pass
 
@@ -143,7 +146,15 @@ For AAA audits, also consult `references/manual-checks-aaa.md`.
 ### 6. Score and derive conformance
 
 ```bash
-node scripts/score.mjs --aggregated ./audit/aggregated.json --out ./audit/score.json
+# Multi-URL input
+node scripts/score.mjs \
+  --aggregated ./wcag-audit/aggregated.json \
+  --out ./wcag-audit/score.json
+
+# Single-URL input is also accepted (wrapped to aggregated shape internally)
+node scripts/score.mjs \
+  --aggregated ./wcag-audit/audit-<timestamp>.json \
+  --out ./wcag-audit/score.json
 ```
 
 Produces per-SC classification (Supports / Partially Supports / Does Not
@@ -164,46 +175,75 @@ For each violation (automated or manual):
 This is the high-value step — the report is useful, but engineering teams
 want diffs.
 
-### 8. Generate the findings report
+### 8. Re-audit after fixes
+
+If any source edits were applied in step 7, rerun the audit from step 4 so
+that the findings report and VPAT reflect the **post-fix state** — a
+conformance report based on the pre-fix snapshot is misleading. Overwrite
+the prior `./wcag-audit/aggregated.json` (or `audit-<ts>.json` for single-URL)
+and rerun `score.mjs` against the new result.
+
+If no edits were applied in step 7 (report-only run), skip this step.
+
+Diff the new `aggregated.json` against the prior one to confirm violations
+were fixed and none regressed.
+
+### 9. Generate the findings report
 
 ```bash
 node scripts/report-generate.mjs \
-  --aggregated ./audit/aggregated.json \
-  --score ./audit/score.json \
-  --out ./report.md
+  --aggregated ./wcag-audit/aggregated.json \
+  --score ./wcag-audit/score.json
+# writes ./wcag-audit/report.md
 ```
 
 Deterministic markdown — same inputs produce byte-identical output. Safe to
-diff between runs, commit to the repo, or publish.
+diff between runs, commit to the repo, or publish. Reflects the most recent
+audit (post-fix if step 8 ran).
 
-### 9. (Optional) Generate the VPAT ACR
+### 10. Generate the VPAT ACR (mandatory prompt)
 
-If the user needs a formal Accessibility Conformance Report:
+**You MUST prompt the user via `AskUserQuestion` whether to generate a
+formal Accessibility Conformance Report, even if they did not mention it.**
+A findings report (step 9) is *not* the same artifact as a VPAT/ACR — ACRs
+are the deliverable procurement and legal teams expect. Never silently
+skip this step.
+
+Present three options:
+
+- **Skip** — the findings report is sufficient for our purposes.
+- **Worksheet only** — markdown table (`./wcag-audit/ACR-<product>-<date>-worksheet.md`),
+  no ITI template required. Fast, always works, good for internal review.
+- **Full .docx ACR** — fills in a user-supplied ITI VPAT 2.5 INT `.docx`
+  template. Best-effort table population; worksheet companion also produced.
+  User must download the template from
+  <https://www.itic.org/policy/accessibility/vpat> first — this skill does
+  not redistribute it.
+
+If the user picks Worksheet or Full .docx, also collect `--product "<name>"`
+and `--version "<v>"` via `AskUserQuestion` before running (both are
+required by `vpat-fill.mjs`).
+
+Commands:
 
 ```bash
-# Worksheet mode — always works, no template needed
+# Worksheet mode
 node scripts/vpat-fill.mjs \
-  --aggregated ./audit/aggregated.json \
-  --score ./audit/score.json \
+  --aggregated ./wcag-audit/aggregated.json \
+  --score ./wcag-audit/score.json \
   --product "MyApp" --version "1.0"
+# writes ./wcag-audit/ACR-MyApp-<date>-worksheet.md
 
-# .docx mode — user downloads ITI template first
+# .docx mode (user-supplied ITI template)
 node scripts/vpat-fill.mjs \
-  --aggregated ./audit/aggregated.json \
-  --score ./audit/score.json \
+  --aggregated ./wcag-audit/aggregated.json \
+  --score ./wcag-audit/score.json \
   --product "MyApp" --version "1.0" \
-  --template ./VPAT2.5INT.docx \
-  --out ./ACR-MyApp.docx
+  --template ./VPAT2.5INT.docx
+# writes ./wcag-audit/ACR-MyApp-<date>.docx + companion worksheet
 ```
 
-The skill **does not redistribute the ITI template.** Direct the user to
-download it from [itic.org/policy/accessibility/vpat](https://www.itic.org/policy/accessibility/vpat)
-for `.docx` mode. The worksheet markdown mode works standalone.
-
-### 10. Re-audit after fixes
-
-Rerun step 4. Diff the new `aggregated.json` against the prior one to confirm
-violations were fixed and none regressed.
+After running, report the absolute output path(s) to the user.
 
 ## Flag reference
 

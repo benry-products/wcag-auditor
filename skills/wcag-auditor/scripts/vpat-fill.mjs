@@ -20,9 +20,10 @@
  */
 
 import JSZip from 'jszip';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { parseArgs } from 'node:util';
+import { normalizeToAggregated } from './lib/normalize.mjs';
 
 const EXIT_OK = 0;
 const EXIT_SCRIPT_ERROR = 2;
@@ -56,8 +57,8 @@ function parseCliArgs(argv) {
   const datestamp = new Date().toISOString().slice(0, 10);
   const baseName = `ACR-${sanitize(values.product)}-${datestamp}`;
   const defaultOut = values.template
-    ? `./${baseName}.docx`
-    : `./${baseName}-worksheet.md`;
+    ? `./wcag-audit/${baseName}.docx`
+    : `./wcag-audit/${baseName}-worksheet.md`;
 
   return {
     aggregatedPath: resolve(values.aggregated),
@@ -83,7 +84,9 @@ Usage:
     [--template <path-to-iti-docx>] [--out <path>]
 
 Required:
-  --aggregated <path>    aggregated.json from audit-site.mjs
+  --aggregated <path>    aggregated.json from audit-site.mjs,
+                         OR a single-URL audit JSON from audit.mjs
+                         (single-URL input is wrapped internally)
   --score <path>         score.json from score.mjs
   --product "<name>"     product name for the ACR
   --version "<v>"        product version for the ACR
@@ -93,8 +96,8 @@ Optional:
                          if provided, emits filled .docx AND worksheet
                          if omitted, emits worksheet only
   --out <path>           output path; default:
-                           ./ACR-<product>-<date>.docx (with --template)
-                           ./ACR-<product>-<date>-worksheet.md (without)
+                           ./wcag-audit/ACR-<product>-<date>.docx (with --template)
+                           ./wcag-audit/ACR-<product>-<date>-worksheet.md (without)
   -h, --help             show this help
 
 The skill does NOT redistribute the ITI template. Download your own from
@@ -253,6 +256,7 @@ async function fillDocx({ templatePath, rows, outPath }) {
     type: 'nodebuffer',
     compression: 'DEFLATE',
   });
+  await mkdir(dirname(outPath), { recursive: true });
   await writeFile(outPath, outBuf);
   return matchedCount;
 }
@@ -312,7 +316,10 @@ async function main() {
 
   let aggregated, score;
   try {
-    aggregated = JSON.parse(await readFile(opts.aggregatedPath, 'utf8'));
+    aggregated = normalizeToAggregated(
+      JSON.parse(await readFile(opts.aggregatedPath, 'utf8')),
+      fail,
+    );
     score = JSON.parse(await readFile(opts.scorePath, 'utf8'));
   } catch (err) {
     fail(`failed to read inputs: ${err.message}`);
@@ -330,6 +337,7 @@ async function main() {
     aggregated,
     score,
   });
+  await mkdir(dirname(worksheetPath), { recursive: true });
   await writeFile(worksheetPath, worksheetMd, 'utf8');
   process.stderr.write(`vpat-fill: worksheet -> ${worksheetPath}\n`);
 

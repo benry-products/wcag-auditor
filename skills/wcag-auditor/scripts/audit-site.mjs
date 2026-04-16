@@ -41,7 +41,7 @@ function parseCliArgs(argv) {
       viewport: { type: 'string', multiple: true },
       concurrency: { type: 'string', default: '1' },
       'include-best-practice': { type: 'boolean', default: false },
-      out: { type: 'string', default: './audit' },
+      out: { type: 'string', default: './wcag-audit' },
       'fail-on': { type: 'string', default: 'none' },
       help: { type: 'boolean', short: 'h', default: false },
     },
@@ -129,7 +129,7 @@ Audit options:
   --viewport <WxH>         repeatable (default: 1280x800 and 375x667)
   --concurrency <n>        parallel audits (default: 1)
   --include-best-practice  include axe best-practice rules
-  --out <dir>              output directory (default: ./audit)
+  --out <dir>              output directory (default: ./wcag-audit)
   --fail-on <level>        none|minor|moderate|serious|critical|any (default: none)
   -h, --help               show this help
 

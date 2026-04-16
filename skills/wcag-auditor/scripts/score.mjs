@@ -21,6 +21,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { WCAG_SCS, filterByLevel, scTagFromAxe } from './lib/wcag-sc-list.mjs';
+import { normalizeToAggregated } from './lib/normalize.mjs';
 
 const axe = axeModule.default ?? axeModule;
 
@@ -61,7 +62,9 @@ Usage:
   node score.mjs --aggregated <path> [--out <path>]
 
 Options:
-  --aggregated <path>  aggregated.json produced by audit-site.mjs
+  --aggregated <path>  aggregated.json from audit-site.mjs,
+                       OR a single-URL audit JSON from audit.mjs
+                       (single-URL input is wrapped internally)
   --out <path>         write score JSON (default: stdout)
   -h, --help           show this help
 `);
@@ -181,7 +184,7 @@ async function main() {
   let aggregated;
   try {
     const raw = await readFile(opts.aggregatedPath, 'utf8');
-    aggregated = JSON.parse(raw);
+    aggregated = normalizeToAggregated(JSON.parse(raw), fail);
   } catch (err) {
     fail(`failed to read --aggregated ${opts.aggregatedPath}: ${err.message}`);
   }

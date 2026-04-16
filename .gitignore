@@ -1,6 +1,7 @@
 node_modules/
 
 # Audit outputs
+/wcag-audit/
 audit-*.json
 /audit/
 report.md

@@ -1,7 +1,7 @@
 ---
 name: wcag-auditor
 description: Use when the user wants to audit their own web application for WCAG accessibility compliance, run an a11y check on a URL (including authenticated routes), generate a markdown accessibility findings report, fill in a VPAT / ACR, or get concrete remediation diffs for accessibility violations. Default target is WCAG 2.2 Level AA (covers 2.0/2.1 A/AA transitively); AAA is opt-in. VPAT fill-in requires a user-supplied ITI VPAT 2.5 INT template; covers WCAG + Section 508 + EN 301 549 via crosswalks.
-version: "0.1.1"
+version: "0.1.2"
 author: Scott Baldwin
 license: MIT
 tags:
@@ -23,13 +23,8 @@ diffs against the user's source code.
 
 ## Prerequisites
 
-- **Node.js ≥ 22** (current active LTS). The scripts use modern ESM features and will fail on Node 20.
-- **Install runtime dependencies** before first use. From the installed skill directory (typically `~/.claude/skills/wcag-auditor/`):
-  ```bash
-  npm install
-  npx playwright install chromium
-  ```
-  This pulls in `playwright`, `@axe-core/playwright`, `axe-core`, `fast-xml-parser`, `docx`, and `jszip`, and downloads the Chromium binary Playwright drives.
+- **Node.js ≥ 22** (current active LTS). The scripts use modern ESM features and will fail on Node 20. This is the only thing the user must install themselves.
+- **Runtime dependencies** (`playwright`, `@axe-core/playwright`, `axe-core`, `fast-xml-parser`, `docx`, `jszip`) and the **Playwright Chromium binary** are installed automatically by Claude on first use — see the bootstrap step at the top of the workflow. The user does not run anything manually.
 
 ## When to use this skill
 
@@ -49,6 +44,48 @@ Do **not** use this skill for:
 - Auditing sites the user does not own, where no source is available — the skill relies on reading the user's repo to propose fixes
 
 ## Workflow
+
+### 0. Bootstrap (auto, on first use and after plugin updates)
+
+**Run this before step 1 every time the skill is invoked.** It is a cheap
+no-op when dependencies are already installed, and it self-heals after
+plugin version bumps (which land the skill in a new versioned cache dir
+without `node_modules/`).
+
+Determine the skill install dir — typically the directory that contains
+this `SKILL.md`. In a plugin install that will be something like:
+
+```
+~/.claude/plugins/cache/wcag-auditor-tools/wcag-auditor/<version>/skills/wcag-auditor/
+```
+
+The skill's `package.json` lives at the **plugin root** (two levels up
+from `skills/wcag-auditor/`). `cd` to the plugin root, then:
+
+1. If `./node_modules/` does not exist, run:
+   ```bash
+   npm install
+   ```
+   This installs `playwright`, `@axe-core/playwright`, `axe-core`,
+   `fast-xml-parser`, `docx`, and `jszip`. Tarballs are npm-cached
+   globally, so subsequent installs after plugin updates are fast.
+
+2. Run (always — it is a no-op when the correct Chromium revision is
+   already cached under `~/Library/Caches/ms-playwright/` on macOS,
+   `~/.cache/ms-playwright/` on Linux):
+   ```bash
+   npx playwright install chromium
+   ```
+   Exits in under a second with "chromium X is already installed" when
+   cached; downloads only when the underlying Playwright version changed.
+
+Both commands are idempotent. If the user has not pre-authorized `npm` /
+`npx` in their Claude Code permissions, the first invocation will prompt
+for approval; after that they run silently.
+
+Do not proceed to step 1 until both commands complete successfully. If
+`npm install` fails (e.g., offline, disk full), surface the error and
+stop — the audit scripts cannot run without dependencies.
 
 ### 1. Clarify scope (mandatory gate)
 

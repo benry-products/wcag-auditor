@@ -1,7 +1,7 @@
 ---
 name: wcag-auditor
 description: Use when the user wants to audit their own web application for WCAG accessibility compliance, run an a11y check on a URL (including authenticated routes), generate a markdown accessibility findings report, fill in a VPAT / ACR, or get concrete remediation diffs for accessibility violations. Default target is WCAG 2.2 Level AA (covers 2.0/2.1 A/AA transitively); AAA is opt-in. VPAT fill-in requires a user-supplied ITI VPAT 2.5 INT template; covers WCAG + Section 508 + EN 301 549 via crosswalks.
-version: "0.1.4"
+version: "0.1.5"
 author: Scott Baldwin
 license: MIT
 tags:
@@ -200,7 +200,11 @@ manual-check results — update them based on step 5.
 
 ### 7. Triage & remediate (conversational)
 
-For each violation (automated or manual):
+Before starting: announce the total violation count (e.g., "5 violations
+found; I'll walk through each one.") and keep an internal list of which
+violations are pending, fixed, or declined as you go.
+
+For **each** violation (automated or manual):
 
 1. Cite the WCAG SC by number and title (look up in `references/wcag-2.2-criteria.md`)
 2. Explain user impact plainly (who is affected, how)
@@ -208,6 +212,28 @@ For each violation (automated or manual):
 4. Pick the closest remediation pattern from `references/remediation-patterns.md`
 5. Propose a concrete `Edit` tool diff against the matched source file
 6. For complex cases, explain the fix first, then offer the edit
+
+**Handling the user's response (critical):**
+
+- **Accept / yes / "fix it"** → apply the edit, mark this violation fixed,
+  move to the **next violation in the list** without waiting for further
+  input.
+- **Decline / no / "skip" / "not now"** → do **not** stop. Mark this
+  violation declined, note any reason the user gave, and move to the
+  **next violation in the list** immediately. A "no" on one violation is
+  never a signal to end the walkthrough — it only ends this one item.
+- **"Stop" / "end" / "that's enough"** → this is the only input that
+  ends the walkthrough early. Everything else continues.
+- **Clarifying question** → answer it, then re-ask the accept/decline
+  question for the same violation.
+
+Do not batch-ask ("want me to fix all of them?") — present one violation
+at a time so the user can make per-item decisions.
+
+When the list is exhausted (or the user says "stop"), print a summary:
+total violations, how many fixed, how many declined (with reasons if
+given), and remind the user that step 8 (re-audit) is next if any fixes
+were applied.
 
 This is the high-value step — the report is useful, but engineering teams
 want diffs.

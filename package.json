@@ -1,6 +1,6 @@
 {
   "name": "wcag-auditor",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Claude Code skill: audit your own web app for WCAG 2.2 accessibility compliance, generate findings reports, and fill in VPAT 2.5 INT ACRs.",
   "type": "module",
   "private": true,

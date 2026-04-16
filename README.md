@@ -16,6 +16,23 @@ read your source to locate and fix violations.
 
 ## Install
 
+> **Already installed an older version? Upgrade first.** Claude Code does not
+> auto-upgrade installed plugins, and `/plugin` Discover reads from a *local
+> marketplace clone* that only refreshes on demand — so re-installing from
+> Discover can silently give you the same old version. Run this before
+> anything else:
+>
+> ```
+> /plugin marketplace update wcag-auditor-tools
+> /plugin uninstall wcag-auditor
+> /plugin install wcag-auditor@wcag-auditor-tools
+> ```
+>
+> The `uninstall` step is required — a plain `/plugin install` may
+> short-circuit on the existing cached version instead of fetching the new
+> one. After running, invoke any script and confirm the banner line prints
+> the current version (see [latest plugin.json](./.claude-plugin/plugin.json)).
+
 This repo ships as both a Claude Code plugin (via a one-plugin marketplace) and
 a standalone skill. Pick whichever fits your workflow.
 

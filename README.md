@@ -21,9 +21,13 @@ a standalone skill. Pick whichever fits your workflow.
 
 ### Requirements (all install paths)
 
-- **Node.js >= 22** (current active LTS)
-- **Playwright Chromium** — installed via `npx playwright install chromium`
-  after the skill's runtime deps are in place
+- **Node.js >= 22** (current active LTS) — the only thing the user installs
+  themselves
+- Runtime dependencies (`playwright`, `axe-core`, etc.) and the Playwright
+  Chromium binary are **installed automatically by Claude on first use**. If
+  you intend to run the CLI scripts directly (`npm run audit`, etc.) without
+  Claude, run `npm install && npx playwright install chromium` in the
+  installed plugin root once.
 
 ### Option 1 — Claude Code plugin marketplace (recommended)
 
@@ -145,6 +149,39 @@ Council (ITI). To produce a formal VPAT 2.5 INT ACR, download the current
 template directly from
 [itic.org/policy/accessibility/vpat](https://www.itic.org/policy/accessibility/vpat),
 then pass its path to `vpat-fill.mjs`.
+
+## Troubleshooting
+
+### "I pushed a fix but Claude is still running old behavior"
+
+Plugin installs are cached under `~/.claude/plugins/cache/…/<version>/` and
+refreshed only when the plugin manager pulls a newer version from the
+marketplace. If the marketplace clone itself is stale (e.g., its git remote
+points at a transferred repo, or `/plugin` hasn't been asked to update), you
+can keep running an old version indefinitely.
+
+The scripts now log their version to stderr on startup
+(`audit.mjs v0.1.2`, etc.). If that number doesn't match the latest
+[plugin.json](./.claude-plugin/plugin.json) on `main`, your cache is stale.
+
+To force a refresh:
+
+```bash
+# 1. Pull the marketplace clone
+cd ~/.claude/plugins/marketplaces/wcag-auditor-tools
+git remote -v                                   # verify origin is benry-products
+git remote set-url origin https://github.com/benry-products/wcag-auditor.git   # if wrong
+git pull --ff-only
+
+# 2. In a Claude Code session, run `/plugin` and update wcag-auditor.
+#    Or, as a manual fallback, mirror the marketplace into the cache:
+rsync -a --delete \
+  ~/.claude/plugins/marketplaces/wcag-auditor-tools/skills/ \
+  ~/.claude/plugins/cache/wcag-auditor-tools/wcag-auditor/<version>/skills/
+```
+
+After this, the next skill invocation will print the new version in the
+banner and run the current code.
 
 ## License
 

@@ -22,6 +22,7 @@ import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { WCAG_SCS, filterByLevel, scTagFromAxe } from './lib/wcag-sc-list.mjs';
 import { normalizeToAggregated } from './lib/normalize.mjs';
+import { printVersionBanner } from './lib/version.mjs';
 
 const axe = axeModule.default ?? axeModule;
 
@@ -179,6 +180,7 @@ function classifySc({ applicableRules, aggregated }) {
 }
 
 async function main() {
+  printVersionBanner('score.mjs');
   const opts = parseCliArgs(process.argv.slice(2));
 
   let aggregated;

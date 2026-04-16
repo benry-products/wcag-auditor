@@ -1,6 +1,6 @@
 {
   "name": "wcag-auditor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Audit your own web app for WCAG 2.2 accessibility compliance. Runs axe-core via Playwright against public and authenticated routes, maps violations to WCAG success criteria, proposes remediation diffs against your source, and fills in VPAT 2.5 INT ACRs.",
   "author": {
     "name": "Scott Baldwin"
